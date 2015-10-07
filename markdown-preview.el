@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (web-server "0.1.1"))
+;; Package-Requires: ((emacs "24.5"))
 ;; Keywords: http, server, network, org-mode
 ;; Homepage: https://github.com/chuntaro/markdown-preview
 
