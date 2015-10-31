@@ -3,7 +3,7 @@
 ;; Copyright (C) 2015  chuntaro
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "24.5"))
 ;; Keywords: http, markdown
 ;; Homepage: https://github.com/chuntaro/markdown-preview
@@ -28,9 +28,9 @@
 ;; Usage
 ;;
 ;; (add-to-list 'load-path "/full/path/where/markdown-preview.el/in/")
-;; (autoload 'mp-preview "markdown-preview" "Github flavored markdown preview for Emacs" t)
+;; (autoload 'markdown-preview "markdown-preview" "Github flavored markdown preview for Emacs" t)
 ;;
-;; Execute M-x mp-preview while editing the Markdown.
+;; Execute M-x markdown-preview while editing the Markdown.
 ;; For example README.md.html is created that it is being edited the README.md.
 ;;
 ;; TODO: asynchronous
@@ -43,30 +43,31 @@
 (eval-when-compile (require 'cl))
 (require 'cl-lib)
 
-(defconst mp-version "0.1.0")
+(defconst markdown-preview-version "0.2.0")
 
 (defgroup markdown-preview nil
   "Github flavored markdown preview for Emacs."
+  :prefix "markdown-preview-"
   :group 'text)
 
-(defcustom mp-api-url "https://api.github.com/markdown/raw"
+(defcustom markdown-preview-api-url "https://api.github.com/markdown/raw"
   "URL of Github markdown API."
   :type 'string
   :group 'markdown-preview)
 
-(defcustom mp-charset "utf-8"
+(defcustom markdown-preview-charset "utf-8"
   "Character set of when to request API."
   :type 'string
   :group 'markdown-preview)
 
-(defcustom mp-content-type "text/plain"
+(defcustom markdown-preview-content-type "text/plain"
   "MIME type of when to request API."
   :type 'string
   :group 'markdown-preview)
 
 (defvar url-http-response-status)
 
-(defun mp-http-post (url data charset extra-headers)
+(defun markdown-preview-http-post (url data charset extra-headers)
   (let ((url-request-method "POST")
 	(url-request-data data)
 	(url-request-extra-headers extra-headers)
@@ -85,37 +86,45 @@
 	  (setq data (buffer-substring-no-properties (point-min) (point-max)))))
       (cl-values data header status))))
 
-(defvar mp-data-root (file-name-directory load-file-name))
+(defvar markdown-preview-data-root (file-name-directory load-file-name))
 
-(defvar mp-application-name "markdown-preview")
-(defvar mp-template-shtml (concat mp-application-name ".shtml"))
-(defvar mp-replacement-text (concat "<!--#include virtual=\"" mp-application-name "\" -->"))
+(defvar markdown-preview-application-name "markdown-preview")
+(defvar markdown-preview-template-shtml (concat markdown-preview-application-name ".shtml"))
+(defvar markdown-preview-replacement-text (concat "<!--#include virtual=\""
+						  markdown-preview-application-name "\" -->"))
 
-(defun mp-github-api-markdown ()
+(defun markdown-preview-github-api-markdown ()
   (cl-multiple-value-bind (data _ _)
-      (mp-http-post mp-api-url
+      (markdown-preview-http-post markdown-preview-api-url
 		    (buffer-substring-no-properties (point-min) (point-max))
-		    mp-charset
-		    `(("Content-Type" . ,(format "%s; charset=%s" mp-content-type mp-charset))))
+		    markdown-preview-charset
+		    `(("Content-Type" . ,(format "%s; charset=%s"
+						 markdown-preview-content-type
+						 markdown-preview-charset))))
     (let ((exportname (concat (or (buffer-file-name)
-				  (make-temp-name (expand-file-name mp-application-name
-								    temporary-file-directory)))
+				  (make-temp-name
+				   (expand-file-name markdown-preview-application-name
+						     temporary-file-directory)))
 			      ".html")))
       (with-temp-file exportname
-	(insert-file-contents-literally (expand-file-name mp-template-shtml mp-data-root))
+	(insert-file-contents-literally (expand-file-name markdown-preview-template-shtml
+							  markdown-preview-data-root))
 	(goto-char (point-min))
 	(if (search-forward-regexp "<title>.*</title>" nil t)
 	    (replace-match (concat "<title>" (file-name-nondirectory exportname) "</title>") t t))
 	(goto-char (point-min))
-	(if (search-forward mp-replacement-text nil t)
+	(if (search-forward markdown-preview-replacement-text nil t)
 	    (replace-match data t t)))
       exportname)))
 
 ;;;###autoload
-(defun mp-preview ()
+(defun markdown-preview ()
   "Github flavored markdown preview for Emacs"
   (interactive)
-  (browse-url (mp-github-api-markdown)))
+  (browse-url (markdown-preview-github-api-markdown)))
+
+;;;###autoload
+(defalias 'mp-preview 'markdown-preview)
 
 (provide 'markdown-preview)
 ;;; markdown-preview.el ends here
